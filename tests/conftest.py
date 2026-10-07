@@ -1,3 +1,4 @@
+"""Общие настройки для тестов."""
 
 import pytest
 from sqlalchemy import create_engine

@@ -1,3 +1,5 @@
+"""Тесты репозитория тем."""
+
 from app.repositories.topic_repository import TopicRepository
 
 
@@ -47,4 +49,3 @@ def test_delete_topic(session):
     repo.delete(topic)
 
     assert repo.get_all() == []
-    
