@@ -1,3 +1,5 @@
+"""Базовый репозиторий с общими операциями."""
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,6 +10,7 @@ class BaseRepository:
     """Общие операции создания, чтения, изменения и удаления."""
 
     def __init__(self, session: Session, model: type[Base]):
+        """Запоминает сессию базы и модель, с которой работаем."""
         self.session = session
         self.model = model
 

@@ -1,3 +1,5 @@
+"""Репозиторий вопросов."""
+
 from sqlalchemy import select  # select = «выбрать» строки из таблицы
 from sqlalchemy.orm import Session  # нужна для подсказки типа
 
@@ -9,6 +11,7 @@ class QuestionRepository(BaseRepository):  # наследует create, update �
     """Работа с таблицей вопросов."""
 
     def __init__(self, session: Session):
+        """Запоминает сессию базы данных."""
         super().__init__(session, Question)  # родителю: сессия и модель
 
     def find(
