@@ -1,3 +1,5 @@
+"""Модель вопроса (сложность, тип задания, тема, дата создания)."""
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -5,6 +7,8 @@ from app.models.base import Base
 
 
 class Question(Base):
+    """Вопрос из банка."""
+
     __tablename__ = "questions"
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str] = mapped_column()
