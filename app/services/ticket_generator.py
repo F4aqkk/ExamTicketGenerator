@@ -1,3 +1,5 @@
+"""Генератор билетов из банка вопросов."""
+
 import random  # модуль случайных чисел
 
 from app.models.question import Question
@@ -12,6 +14,7 @@ class TicketGenerator:
     """Составляет билеты из вопросов банка."""
 
     def __init__(self, question_repo: QuestionRepository):
+        """Запоминает репозиторий, из которого берутся вопросы."""
         self.question_repo = question_repo  # через него берём вопросы
 
     def generate(
