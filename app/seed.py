@@ -217,7 +217,7 @@ QUESTIONS = {
 
 
 def build_questions(topic: Topic, tags: dict[str, Tag]) -> list[Question]:
-    """Вопросы темы: сначала настоящие, потом тестовые до PER_LEVEL."""
+    """Вопросы темы: сначала настоящие, потом тестовые до нужного числа."""
     questions = []
     for difficulty in (1, 2, 3):
         real = [q for q in QUESTIONS[topic.name] if q[0] == difficulty]

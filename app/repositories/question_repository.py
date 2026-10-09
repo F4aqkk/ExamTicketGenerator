@@ -55,13 +55,13 @@ class QuestionRepository(BaseRepository):  # наследует create, update �
         return questions
 
     def add_tag(self, question: Question, tag: Tag) -> None:
-        """Привязать тег к вопросу (строка в таблице question_tags)."""
+        """Привязать тег к вопросу (строка в таблице «вопрос–тег»)."""
         if tag not in question.tags:  # второй раз тот же тег не нужен
             question.tags.append(tag)
             self.session.commit()
 
     def remove_tag(self, question: Question, tag: Tag) -> None:
-        """Отвязать тег от вопроса (строка из question_tags удаляется)."""
+        """Отвязать тег от вопроса (строка «вопрос–тег» удаляется)."""
         if tag in question.tags:
             question.tags.remove(tag)
             self.session.commit()

@@ -26,8 +26,8 @@ class GenerationService:
     ) -> Generation:
         """Составить билеты и сохранить всё сразу.
 
-        Сохраняется одна строка в generations, tickets_count строк
-        в tickets и по строке в ticket_questions на каждый вопрос.
+        Сохраняется одна строка генерации, по строке на каждый билет
+        и по строке на каждый вопрос каждого билета.
         Если хоть одна запись не сохранится, не сохранится ничего.
         """
         tickets = self.generator.generate(tickets_count, counts, topic_ids)

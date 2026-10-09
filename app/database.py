@@ -20,7 +20,7 @@ def enable_foreign_keys(dbapi_connection, connection_record):
 
 
 def watch_foreign_keys(any_engine: Engine) -> None:
-    """Включать внешние ключи при каждом подключении к этому engine."""
+    """Включать внешние ключи при каждом подключении к этой базе."""
     event.listen(any_engine, "connect", enable_foreign_keys)
 
 

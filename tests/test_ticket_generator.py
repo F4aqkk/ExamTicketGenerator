@@ -11,7 +11,7 @@ from app.services.ticket_generator import (
 
 
 def add_questions(session, topic_id, difficulty, count):
-    """Добавить в базу count вопросов одной сложности."""
+    """Добавить в базу нужное количество вопросов одной сложности."""
     repo = QuestionRepository(session)
     for i in range(count):
         repo.create(
