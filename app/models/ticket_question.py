@@ -1,9 +1,15 @@
 """Модель вопроса в билете."""
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:  # импорт только для подсказок, при запуске не выполняется
+    from app.models.question import Question
+    from app.models.ticket import Ticket
 
 
 class TicketQuestion(Base):
@@ -20,3 +26,8 @@ class TicketQuestion(Base):
     )
     # Номер вопроса в билете.
     position: Mapped[int] = mapped_column()
+    ticket: Mapped["Ticket"] = relationship(
+        back_populates="ticket_questions",
+    )
+    # Сам вопрос. Читается из базы при первом обращении.
+    question: Mapped["Question"] = relationship()
