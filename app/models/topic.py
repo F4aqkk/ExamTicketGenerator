@@ -17,6 +17,9 @@ class Topic(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(unique=True)
     # Вопросы темы. Ленивая загрузка: читаются из базы при первом обращении.
+    # passive_deletes="all": при удалении темы вопросы не трогаем,
+    # решает база (RESTRICT в questions.topic_id).
     questions: Mapped[list["Question"]] = relationship(
         back_populates="topic",
+        passive_deletes="all",
     )

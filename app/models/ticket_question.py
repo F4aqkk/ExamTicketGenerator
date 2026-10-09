@@ -16,12 +16,14 @@ class TicketQuestion(Base):
     """Связь билета с вопросом и порядок вопроса в билете."""
 
     __tablename__ = "ticket_questions"
+    # CASCADE: удалили билет, удаляются и его вопросы билета.
     ticket_id: Mapped[int] = mapped_column(
-        ForeignKey("tickets.id"),
+        ForeignKey("tickets.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    # RESTRICT: вопрос, который стоит в сохранённом билете, удалить нельзя.
     question_id: Mapped[int] = mapped_column(
-        ForeignKey("questions.id"),
+        ForeignKey("questions.id", ondelete="RESTRICT"),
         primary_key=True,
     )
     # Номер вопроса в билете.

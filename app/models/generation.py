@@ -39,5 +39,6 @@ class Generation(Base):
     tickets: Mapped[list["Ticket"]] = relationship(
         back_populates="generation",
         cascade="all, delete-orphan",
+        passive_deletes=True,  # незагруженные билеты удалит сама база
         order_by="Ticket.number",
     )

@@ -58,6 +58,16 @@ def test_update_and_delete_question(session):
     assert repo.get_all() == []
 
 
+def test_topic_with_questions_cannot_be_deleted(session):
+    """Тему, в которой есть вопросы, удалить нельзя (RESTRICT)."""
+    topics = TopicRepository(session)
+    topic = topics.create(name="SQL")
+    make_question(QuestionRepository(session), topic)
+
+    with pytest.raises(IntegrityError):
+        topics.delete(topic)
+
+
 def test_lazy_loading_topic_and_questions(session):
     """Связанные объекты читаются через атрибуты (relationship)."""
     topic = TopicRepository(session).create(name="SQL")

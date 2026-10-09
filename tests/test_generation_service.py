@@ -1,8 +1,11 @@
 """Тесты сохранения генерации, билетов и вопросов билетов."""
 
 import pytest
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 
+from app.models.generation import Generation
+from app.models.ticket_question import TicketQuestion
 from app.repositories.generation_repository import GenerationRepository
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.ticket_repository import TicketRepository
@@ -74,3 +77,38 @@ def test_history_newest_first(session):
     history = GenerationRepository(session).get_history()
 
     assert [g.title for g in history] == ["Вторая", "Первая"]
+
+
+def test_ticket_number_is_unique_in_generation(session):
+    """Второй билет с тем же номером в генерации не сохранится (UNIQUE)."""
+    fill_bank(session)
+    generation = GenerationService(session).create("Экзамен", 2, {1: 1})
+
+    with pytest.raises(IntegrityError):
+        TicketRepository(session).create(
+            generation_id=generation.id,
+            number=1,
+        )
+
+
+def test_database_deletes_tickets_itself(session):
+    """Удаление генерации прямым запросом: билеты удаляет база (CASCADE)."""
+    fill_bank(session)
+    GenerationService(session).create("Экзамен", 3, {1: 1})
+    session.expunge_all()  # забыть объекты: пусть работает только база
+
+    session.execute(delete(Generation))
+    session.commit()
+
+    assert TicketRepository(session).get_all() == []
+    assert session.scalars(select(TicketQuestion)).all() == []
+
+
+def test_question_in_saved_ticket_cannot_be_deleted(session):
+    """Вопрос из сохранённого билета удалить нельзя (RESTRICT)."""
+    fill_bank(session)
+    generation = GenerationService(session).create("Экзамен", 1, {1: 1})
+    question = generation.tickets[0].ticket_questions[0].question
+
+    with pytest.raises(IntegrityError):
+        QuestionRepository(session).delete(question)

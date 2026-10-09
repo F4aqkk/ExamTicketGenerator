@@ -30,7 +30,10 @@ class Question(Base):
     answer: Mapped[str] = mapped_column()
     difficulty: Mapped[int] = mapped_column()
     task_type: Mapped[str] = mapped_column()
-    topic_id: Mapped[int] = mapped_column(ForeignKey("topics.id"))
+    # RESTRICT: тему, в которой есть вопросы, база удалить не даст.
+    topic_id: Mapped[int] = mapped_column(
+        ForeignKey("topics.id", ondelete="RESTRICT"),
+    )
     # DEFAULT: если дату не передали, база сама ставит текущее время.
     created_at: Mapped[str] = mapped_column(
         server_default=func.current_timestamp(),
