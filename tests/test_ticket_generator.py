@@ -62,6 +62,19 @@ def test_topic_filter(session):
             assert question.topic_id == python.id
 
 
+def test_questions_without_difficulty_are_not_used(session):
+    """Вопросы со сложностью 0 («не задана») в билеты не попадают."""
+    topic = TopicRepository(session).create(name="SQL")
+    add_questions(session, topic.id, 0, 5)
+    add_questions(session, topic.id, 1, 2)
+    generator = TicketGenerator(QuestionRepository(session))
+
+    tickets = generator.generate(3, {1: 2})
+
+    for ticket in tickets:
+        assert all(q.difficulty == 1 for q in ticket)
+
+
 def test_tickets_count_and_difficulties(session):
     """Билетов столько, сколько просили, в каждом нужные сложности."""
     topic = TopicRepository(session).create(name="SQL")

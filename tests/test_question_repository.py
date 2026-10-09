@@ -28,12 +28,21 @@ def test_created_at_is_filled_by_default(session):
     assert question.created_at is not None
 
 
-def test_difficulty_must_be_from_1_to_3(session):
+def test_difficulty_must_be_from_0_to_3(session):
     """Сложность 4 база не сохраняет (CHECK)."""
     topic = TopicRepository(session).create(name="SQL")
 
     with pytest.raises(IntegrityError):
         make_question(QuestionRepository(session), topic, difficulty=4)
+
+
+def test_difficulty_zero_means_not_set(session):
+    """Сложность 0 сохраняется: это «не задана», такие вопросы ищутся."""
+    topic = TopicRepository(session).create(name="SQL")
+    repo = QuestionRepository(session)
+    question = make_question(repo, topic, difficulty=0)
+
+    assert repo.search(difficulty=0) == [question]
 
 
 def test_update_and_delete_question(session):

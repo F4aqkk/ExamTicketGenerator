@@ -16,10 +16,12 @@ class Question(Base):
     """Вопрос из банка."""
 
     __tablename__ = "questions"
-    # CHECK: база не даст сохранить сложность меньше 1 или больше 3.
+    # CHECK: сложность от 0 до 3. 1 лёгкий, 2 средний, 3 сложный,
+    # 0 «не задана» (не распознана при импорте); такие вопросы
+    # в билеты не попадают, пока преподаватель не укажет сложность.
     __table_args__ = (
         CheckConstraint(
-            "difficulty BETWEEN 1 AND 3",
+            "difficulty BETWEEN 0 AND 3",
             name="ck_questions_difficulty",
         ),
     )
