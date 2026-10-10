@@ -1,5 +1,7 @@
 """Общие настройки для тестов."""
 
+import os
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -7,6 +9,9 @@ from sqlalchemy.orm import Session
 import app.models  # noqa: F401  (подключаем все модели)
 from app.database import watch_foreign_keys
 from app.models.base import Base
+
+# Окна в тестах создаются без экрана: на мониторе ничего не мелькает.
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 @pytest.fixture
