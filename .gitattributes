@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Файлы .bat всегда с окончаниями строк Windows: так их понимает cmd
+*.bat text eol=crlf
