@@ -25,8 +25,8 @@ class TicketGenerator:
     ) -> list[list[Question]]:
         """Составить билеты; каждый билет это список вопросов.
 
-        Пример counts: {1: 5, 2: 5, 3: 5} значит 5 лёгких, 5 средних
-        и 5 сложных вопросов в каждом билете.
+        Пример количества вопросов по сложностям: {1: 5, 2: 5, 3: 5}
+        значит 5 лёгких, 5 средних и 5 сложных вопросов в каждом билете.
         """
         tickets = [[] for _ in range(tickets_count)]  # пустые билеты
         for difficulty, amount in counts.items():
@@ -43,7 +43,7 @@ class TicketGenerator:
 
     @staticmethod
     def _take(queue, questions, amount):
-        """Взять из очереди amount разных вопросов."""
+        """Взять из очереди нужное количество разных вопросов."""
         chosen = []  # вопросы для одного билета
         while len(chosen) < amount:
             if not queue:  # очередь кончилась: перемешать вопросы заново
