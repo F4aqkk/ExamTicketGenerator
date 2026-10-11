@@ -4,13 +4,16 @@
     venv\\Scripts\\python.exe -m app.main
 """
 
+import ctypes
 import sys
 import traceback
 
 from PyQt6.QtCore import QLibraryInfo, QTranslator
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication
 
 from app.database import SessionLocal, init_db
+from app.paths import resource_path
 from app.ui.main_window import MainWindow
 from app.ui.theme import apply_theme
 from app.ui.widgets import show_message
@@ -24,11 +27,29 @@ def install_russian(app: QApplication) -> None:
         app.installTranslator(translator)
 
 
+def install_icon(app: QApplication) -> None:
+    """Поставить значок программы на окна и на панель задач.
+
+    При запуске из исходного кода окно принадлежит Python, и Windows
+    показала бы его значок. Поэтому значок берётся из файла, а Windows
+    сообщается отдельное имя программы: без него на панели задач
+    остался бы значок Python. У программы, собранной в exe-файл,
+    значок на панели задач и так свой.
+    """
+    if sys.platform == "win32" and not getattr(sys, "frozen", False):
+        shell = ctypes.windll.shell32
+        shell.SetCurrentProcessExplicitAppUserModelID("ExamTicket")
+    icon_file = resource_path("icon.ico")
+    if icon_file.exists():
+        app.setWindowIcon(QIcon(str(icon_file)))
+
+
 def main() -> int:
     """Создать приложение, открыть главное окно и ждать его закрытия."""
     app = QApplication(sys.argv)
     app.setApplicationName("ExamTicket")
     apply_theme(app)
+    install_icon(app)
     install_russian(app)
     init_db()  # создать таблицы, если базы ещё нет
     session = SessionLocal()  # одна сессия базы на всё время работы
