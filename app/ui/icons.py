@@ -36,6 +36,16 @@ SHAPES = {
     ),
     "close": '<path d="M6 6 L18 18 M18 6 L6 18"/>',
     "arrow_down": '<path d="M6 9 L12 15 L18 9"/>',
+    "arrow_left": '<path d="M15 6 L9 12 L15 18"/>',
+    "arrow_right": '<path d="M9 6 L15 12 L9 18"/>',
+    "minus": '<path d="M5 12 H19"/>',
+    "check": '<path d="M5 12.5 L10 17.5 L19 7"/>',
+    "file": '<path d="M6 3 H14 L18 7 V21 H6 Z M14 3 V7 H18"/>',
+    "lock": (
+        '<rect x="5" y="11" width="14" height="9" rx="2"/>'
+        '<path d="M8 11 V8 a4 4 0 0 1 8 0 V11"/>'
+    ),
+    "spark": '<path d="M12 3 l2 7 7 2 -7 2 -2 7 -2 -7 -7 -2 7 -2 Z"/>',
 }
 
 SVG = (

@@ -16,7 +16,7 @@ from app.repositories.question_repository import QuestionRepository
 from app.repositories.tag_repository import TagRepository
 from app.repositories.topic_repository import TopicRepository
 
-BANK_LIMIT = 1500  # на столько вопросов рассчитан банк (из ТЗ)
+BANK_LIMIT = 6000  # на столько вопросов рассчитан банк (из ТЗ)
 TASK_TYPES = ("Теория", "Практика")
 DIFFICULTY_NAMES = {
     0: "Не задана",

@@ -180,3 +180,5 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 *.db
+# Настройки программы: у каждого пользователя свои
+settings.json

@@ -10,7 +10,10 @@ from app.repositories.generation_repository import GenerationRepository
 from app.repositories.question_repository import QuestionRepository
 from app.repositories.ticket_repository import TicketRepository
 from app.repositories.topic_repository import TopicRepository
-from app.services.generation_service import GenerationService
+from app.services.generation_service import (
+    GenerationError,
+    GenerationService,
+)
 
 
 def fill_bank(session):
@@ -112,3 +115,82 @@ def test_question_in_saved_ticket_cannot_be_deleted(session):
 
     with pytest.raises(IntegrityError):
         QuestionRepository(session).delete(question)
+
+
+def test_available_counts_questions_by_difficulty(session):
+    """Считается, сколько вопросов каждой сложности в выбранных темах."""
+    fill_bank(session)
+    other = TopicRepository(session).create(name="Git")
+    QuestionRepository(session).create(
+        text="Что делает команда git commit?",
+        answer="Сохраняет изменения в истории проекта.",
+        difficulty=1,
+        task_type="Теория",
+        topic_id=other.id,
+    )
+    service = GenerationService(session)
+
+    assert service.available() == {1: 5, 2: 4, 3: 4}
+    assert service.available([other.id]) == {1: 1, 2: 0, 3: 0}
+
+
+def test_generate_saves_tickets_for_chosen_topics(session):
+    """Правила выполнены: билеты составлены и попали в историю."""
+    fill_bank(session)
+    topic = TopicRepository(session).get_by_name("SQL")
+    service = GenerationService(session)
+
+    generation = service.generate(
+        "  Экзамен  ",
+        3,
+        {1: 2, 2: 1, 3: 0},
+        [topic.id],
+    )
+
+    assert generation.title == "Экзамен"
+    assert generation.questions_per_ticket == 3
+    assert service.history() == [generation]
+    assert service.topic_names(generation) == ["SQL"]
+
+
+@pytest.mark.parametrize(
+    ("title", "tickets_count", "counts", "has_topics", "message"),
+    [
+        ("", 1, {1: 1}, True, "Введите название работы."),
+        ("Экзамен", 1, {1: 1}, False, "Выберите хотя бы одну тему."),
+        ("Экзамен", 0, {1: 1}, True, "от 1 до 100"),
+        ("Экзамен", 101, {1: 1}, True, "от 1 до 100"),
+        ("Экзамен", 1, {1: 0, 2: 0}, True, "хотя бы один вопрос"),
+        ("Экзамен", 1, {3: 5}, True, "Не хватает сложных вопросов"),
+    ],
+)
+def test_generate_rejects_wrong_rules(
+    session,
+    title,
+    tickets_count,
+    counts,
+    has_topics,
+    message,
+):
+    """Нарушено правило: ошибка с понятным текстом, в истории пусто."""
+    fill_bank(session)
+    topic = TopicRepository(session).get_by_name("SQL")
+    service = GenerationService(session)
+    topic_ids = [topic.id] if has_topics else []
+
+    with pytest.raises(GenerationError, match=message):
+        service.generate(title, tickets_count, counts, topic_ids)
+
+    assert service.count() == 0
+
+
+def test_delete_removes_generation_from_history(session):
+    """Удалённая генерация пропадает из истории вместе с билетами."""
+    fill_bank(session)
+    service = GenerationService(session)
+    generation = service.create("Экзамен", 2, {1: 1})
+
+    service.delete(generation)
+
+    assert service.history() == []
+    assert TicketRepository(session).get_all() == []

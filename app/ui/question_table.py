@@ -3,7 +3,7 @@
 Таблица собрана из трёх частей (подход «модель – представление»):
 модель отдаёт данные вопросов, делегат рисует ячейки как на макете,
 а сама таблица показывает строки и сообщает о нажатиях. Qt рисует
-только те строки, что видны на экране, поэтому 1500 вопросов
+только те строки, что видны на экране, поэтому 6000 вопросов
 открываются так же быстро, как 15.
 """
 
@@ -27,8 +27,6 @@ from app.models.question import Question
 from app.services.question_service import DIFFICULTY_NAMES
 from app.ui.icons import make_pixmap
 from app.ui.theme import (
-    ACCENT,
-    BAR_OFF,
     BORDER,
     CHIP,
     FAINT,
@@ -38,6 +36,7 @@ from app.ui.theme import (
     PANEL,
     TEXT,
 )
+from app.ui.widgets import paint_level_bars
 
 # Номера столбцов таблицы.
 NUMBER, QUESTION, TOPIC, DIFFICULTY, TASK_TYPE, EDIT, DELETE = range(7)
@@ -260,13 +259,7 @@ class QuestionDelegate(QStyledItemDelegate):
         """Индикатор из трёх столбиков и название уровня сложности."""
         left = rect.left() + PADDING
         bottom = rect.center().y() + 8
-        painter.setPen(Qt.PenStyle.NoPen)
-        for step in range(3):  # столбики высотой 8, 12 и 16 точек
-            height = 8 + 4 * step
-            lit = step < question.difficulty  # закрашен ли столбик
-            painter.setBrush(QColor(ACCENT if lit else BAR_OFF))
-            bar = QRect(left + step * 5, bottom - height, 3, height)
-            painter.drawRoundedRect(bar, 1, 1)
+        paint_level_bars(painter, left, bottom, question.difficulty)
         area = rect.adjusted(PADDING + 24, 0, -PADDING, 0)
         self._paint_text(painter, area, text, self._font, MUTED)
 
