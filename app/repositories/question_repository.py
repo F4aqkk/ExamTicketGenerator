@@ -2,6 +2,7 @@
 
 from sqlalchemy import select  # select = «выбрать» строки из таблицы
 from sqlalchemy.orm import Session  # нужна для подсказки типа
+from sqlalchemy.orm import joinedload, selectinload  # загрузка связей
 
 from app.models.question import Question  # модель вопроса
 from app.models.tag import Tag
@@ -35,10 +36,18 @@ class QuestionRepository(BaseRepository):  # наследует create, update �
     ) -> list[Question]:
         """Поиск и фильтры для списка вопросов.
 
-        Незаданные условия не учитываются. Текст ищется без учёта
-        регистра: «sql» найдёт и «SQL», «запрос» найдёт «Запрос».
+        Незаданные условия не учитываются. Текст ищется в вопросе
+        и в названиях его тегов без учёта регистра: «sql» найдёт
+        и «SQL», «запрос» найдёт «Запрос».
         """
-        query = select(Question).order_by(Question.id)
+        # Тему и теги читаем сразу вместе с вопросами (жадная загрузка):
+        # таблица показывает их в каждой строке, и без этого на каждый
+        # вопрос уходил бы отдельный запрос к базе.
+        query = (
+            select(Question)
+            .options(joinedload(Question.topic), selectinload(Question.tags))
+            .order_by(Question.id)
+        )
         if difficulty is not None:
             query = query.where(Question.difficulty == difficulty)
         if topic_id is not None:
@@ -51,8 +60,15 @@ class QuestionRepository(BaseRepository):  # наследует create, update �
             # поэтому текст сравниваем в Python: casefold() делает
             # строчными любые буквы, и русские тоже.
             needle = text.casefold()
-            questions = [q for q in questions if needle in q.text.casefold()]
+            questions = [q for q in questions if self._matches(q, needle)]
         return questions
+
+    @staticmethod
+    def _matches(question: Question, needle: str) -> bool:
+        """Есть ли искомый текст в вопросе или в названии его тега."""
+        if needle in question.text.casefold():
+            return True
+        return any(needle in tag.name.casefold() for tag in question.tags)
 
     def add_tag(self, question: Question, tag: Tag) -> None:
         """Привязать тег к вопросу (строка в таблице «вопрос–тег»)."""

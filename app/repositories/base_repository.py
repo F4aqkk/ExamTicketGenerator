@@ -1,6 +1,6 @@
 """Базовый репозиторий с общими операциями."""
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.base import Base
@@ -28,6 +28,11 @@ class BaseRepository:
     def get_all(self) -> list[Base]:
         """Вернуть все записи таблицы."""
         return list(self.session.scalars(select(self.model)))
+
+    def count(self) -> int:
+        """Сколько записей в таблице."""
+        query = select(func.count()).select_from(self.model)
+        return self.session.scalar(query) or 0
 
     def update(self, item: Base, **fields) -> Base:
         """Изменить указанные поля записи и сохранить."""

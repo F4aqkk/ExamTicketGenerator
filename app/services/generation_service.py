@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.generation import Generation
 from app.models.ticket import Ticket
 from app.models.ticket_question import TicketQuestion
+from app.repositories.generation_repository import GenerationRepository
 from app.repositories.question_repository import QuestionRepository
 from app.services.ticket_generator import TicketGenerator
 
@@ -16,6 +17,10 @@ class GenerationService:
         """Запоминает сессию и создаёт генератор билетов."""
         self.session = session
         self.generator = TicketGenerator(QuestionRepository(session))
+
+    def count(self) -> int:
+        """Сколько генераций сохранено в истории."""
+        return GenerationRepository(self.session).count()
 
     def create(
         self,
