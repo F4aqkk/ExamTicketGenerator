@@ -87,3 +87,29 @@ def test_tickets_count_and_difficulties(session):
     assert len(tickets) == 7
     for ticket in tickets:
         assert sorted(q.difficulty for q in ticket) == [1, 2, 3]
+
+
+def test_mix_topics_puts_different_topics_into_ticket(session):
+    """При выборе разных тем в билете нет двух вопросов одной темы."""
+    topics = TopicRepository(session)
+    for name in ("SQL", "Git", "Python"):
+        add_questions(session, topics.create(name=name).id, 1, 3)
+    generator = TicketGenerator(QuestionRepository(session))
+
+    tickets = generator.generate(3, {1: 3}, mix_topics=True)
+
+    for ticket in tickets:
+        assert len({question.topic_id for question in ticket}) == 3
+
+
+def test_tickets_without_no_repeat_rule_are_still_correct(session):
+    """Без правила «не повторять» в каждом билете всё равно нет повторов."""
+    topic = TopicRepository(session).create(name="SQL")
+    add_questions(session, topic.id, 1, 4)
+    generator = TicketGenerator(QuestionRepository(session))
+
+    tickets = generator.generate(5, {1: 3}, no_repeat=False)
+
+    assert len(tickets) == 5
+    for ticket in tickets:
+        assert len(set(ticket)) == 3
