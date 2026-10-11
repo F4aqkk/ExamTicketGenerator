@@ -5,8 +5,10 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from app.models.base import Base
+from app.paths import data_path
 
-DATABASE_URL = "sqlite:///exam_tickets.db"
+# Файл базы: в папке проекта, а у собранной программы рядом с exe.
+DATABASE_URL = "sqlite:///" + data_path("exam_tickets.db").as_posix()
 
 
 engine = create_engine(DATABASE_URL)
