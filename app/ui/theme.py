@@ -21,9 +21,15 @@ CHIP = "#202226"  # фон тега в таблице
 BAR_OFF = "#35373a"  # незакрашенный столбик индикатора сложности
 ONLINE = "#86c7a2"  # точка статуса в боковом меню
 DANGER = "#e5786d"  # текст ошибки в форме
+KNOB = "#fffefd"  # кружок переключателя
+BACKDROP = "#15181c"  # фон вокруг листа в предпросмотре
+PAPER = "#f6f3ec"  # лист билета
+INK = "#1c1a16"  # текст на листе билета
+INK_MUTED = "#8a8478"  # подписи на листе билета
 
 FONT = "Segoe UI"  # основной шрифт Windows
 MONO = "Consolas"  # моноширинный шрифт: номера, счётчики, подписи
+SERIF = "Georgia"  # шрифт с засечками: текст на листе билета
 
 # Стили Qt (QSS) похожи на CSS. Слова с $ заменяются цветами выше.
 STYLE = Template("""
@@ -268,6 +274,172 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #formError {
     color: $danger;
 }
+
+/* Страница «Генератор билетов» */
+QScrollArea {
+    border: none;
+}
+#generatorPanel {
+    border-right: 1px solid $border;
+}
+#panelFooter {
+    border-top: 1px solid $border;
+}
+#summary {
+    color: $muted;
+}
+#warning {
+    color: $accent;
+}
+#stepper {
+    border: 1px solid $outline;
+    border-radius: 7px;
+}
+#stepper QToolButton, QToolButton#flat {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 6px;
+}
+#stepper QToolButton:hover, QToolButton#flat:hover {
+    background: $surface;
+}
+#stepperValue, #pageCounter {
+    font-family: "$mono";
+    font-size: 14px;
+}
+QLineEdit#stepperValue {
+    background: transparent;
+    border: none;
+    padding: 0px;
+}
+QLineEdit#stepperValue:focus {
+    border: none;
+    color: $accent;
+}
+#levels {
+    border: 1px solid $outline;
+    border-radius: 8px;
+}
+#levelRow {
+    border-top: 1px solid $border;
+}
+#switchTitle {
+    font-weight: 600;
+}
+#switchHint {
+    color: $muted;
+    font-size: 11px;
+}
+#previewBar {
+    border-bottom: 1px solid $border;
+}
+#pagesBar {
+    border-top: 1px solid $border;
+}
+#previewCanvas {
+    background: $backdrop;
+}
+QPushButton#chip {
+    font-family: "$mono";
+    font-size: 11px;
+    padding: 8px 12px;
+}
+QPushButton#chip:checked {
+    background: $accent;
+    color: $accent_text;
+    border: 1px solid $accent;
+}
+QPushButton#chip:disabled {
+    background: $panel;
+    color: $faint;
+    border: 1px solid $border;
+}
+QPushButton#pageButton {
+    color: $muted;
+    border: none;
+    padding: 6px 4px;
+    min-width: 24px;
+    font-family: "$mono";
+    font-size: 11px;
+    font-weight: 400;
+}
+QPushButton#pageButton:checked {
+    background: $accent;
+    color: $accent_text;
+    font-weight: 700;
+}
+
+/* Страница «История» */
+#historyRow {
+    border-bottom: 1px solid $border;
+}
+#historyRow:hover {
+    background: $panel;
+}
+#historyTitle {
+    font-size: 14px;
+    font-weight: 600;
+}
+#historyMeta {
+    color: $muted;
+    font-family: "$mono";
+    font-size: 12px;
+}
+
+/* Страница «Настройки» */
+#section {
+    border-bottom: 1px solid $border;
+}
+#sectionTitle {
+    font-size: 15px;
+    font-weight: 600;
+}
+#sectionHint {
+    color: $muted;
+    font-size: 12px;
+}
+#infoCard {
+    background: $panel;
+    border: 1px solid $outline;
+    border-radius: 8px;
+}
+QLineEdit:disabled {
+    color: $muted;
+}
+
+/* Лист билета в предпросмотре */
+#sheet {
+    background: $paper;
+    border-radius: 4px;
+}
+#sheet QLabel {
+    color: $ink;
+    font-family: "$serif";
+    font-size: 15px;
+}
+#sheet QLabel#sheetOrganization {
+    color: $ink_muted;
+    font-size: 11px;
+}
+#sheet QLabel#sheetLine {
+    font-size: 13px;
+}
+#sheet QLabel#sheetNumber {
+    font-size: 22px;
+    font-weight: 700;
+}
+#sheet QLabel#sheetIndex {
+    font-weight: 700;
+}
+#sheet QLabel#sheetNote {
+    color: $ink_muted;
+    font-family: "$font";
+    font-size: 10px;
+}
+#sheetRule {
+    background: $ink;
+}
 """)
 
 
@@ -281,12 +453,18 @@ def build_stylesheet() -> str:
         outline=OUTLINE,
         text=TEXT,
         muted=MUTED,
+        faint=FAINT,
         accent=ACCENT,
         accent_hover=ACCENT_HOVER,
         accent_text=ACCENT_TEXT,
         danger=DANGER,
+        backdrop=BACKDROP,
+        paper=PAPER,
+        ink=INK,
+        ink_muted=INK_MUTED,
         font=FONT,
         mono=MONO,
+        serif=SERIF,
     )
 
 

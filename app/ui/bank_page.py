@@ -1,4 +1,6 @@
-"""Страница «Банк вопросов»: поиск, фильтры и таблица вопросов."""
+"""Страница «Банк вопросов»: поиск, фильтры, таблица, импорт и экспорт."""
+
+from datetime import date
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -13,6 +15,9 @@ from PyQt6.QtWidgets import (
 )
 
 from app.models.question import Question
+from app.services.documents import DocumentError
+from app.services.export_service import ExportService
+from app.services.import_service import ImportResult, ImportService
 from app.services.question_service import (
     BANK_LIMIT,
     QuestionError,
@@ -25,7 +30,10 @@ from app.ui.theme import ACCENT_TEXT, MUTED, TEXT
 from app.ui.widgets import (
     ComboBox,
     SegmentedControl,
+    ask_open_file,
+    ask_save_file,
     confirm,
+    plural,
     show_message,
 )
 
@@ -34,23 +42,54 @@ DIFFICULTY_FILTER = [
     ("Лёгкие", 1),
     ("Средние", 2),
     ("Сложные", 3),
+    ("Без сложности", 0),  # вопросы, сложность которых не распознал импорт
 ]
 SEARCH_DELAY = 250  # миллисекунд ждём после последней буквы в поиске
+OPEN_KINDS = "Файлы банка вопросов (*.xlsx *.docx *.pdf *.txt)"
+SAVE_KINDS = (
+    "Таблица Excel (*.xlsx);;Документ Word (*.docx);;"
+    "Документ PDF (*.pdf);;Текстовый файл (*.txt)"
+)
+
+
+def describe_import(result: ImportResult) -> str:
+    """Итог импорта словами для окна с сообщением."""
+    lines = [f"Добавлено вопросов: {result.added}."]
+    if result.duplicates:
+        lines.append(f"Уже были в банке и пропущены: {result.duplicates}.")
+    if result.empty:
+        lines.append(f"Пропущено записей без текста вопроса: {result.empty}.")
+    if result.no_difficulty:
+        lines.append(
+            f"Сложность не распознана: {result.no_difficulty}. Такие "
+            "вопросы не попадают в билеты: найдите их фильтром "
+            "«Без сложности» и укажите сложность."
+        )
+    return "\n".join(lines)
 
 
 class BankPage(QWidget):
     """Страница банка вопросов.
 
-    Страница сама в базу не ходит: все данные она получает и изменяет
-    через сервис банка вопросов.
+    Страница сама в базу и в файлы не ходит: вопросы она получает
+    и изменяет через сервис банка, а файлы читают и пишут сервисы
+    импорта и экспорта.
     """
 
     bank_changed = pyqtSignal()  # сигнал: вопрос добавлен или удалён
 
-    def __init__(self, service: QuestionService, parent=None):
+    def __init__(
+        self,
+        service: QuestionService,
+        exporter: ExportService,
+        importer: ImportService,
+        parent=None,
+    ):
         """Собрать страницу и показать вопросы из базы."""
         super().__init__(parent)
         self._service = service
+        self._exporter = exporter
+        self._importer = importer
         self._search_timer = QTimer(self)
         self._search_timer.setSingleShot(True)
         self._search_timer.setInterval(SEARCH_DELAY)
@@ -95,6 +134,36 @@ class BankPage(QWidget):
             self._empty_label.setText(self._empty_text())
             self._table_stack.setCurrentWidget(self._empty_label)
 
+    def import_bank(self) -> None:
+        """Добавить в банк вопросы из файла, который выберет пользователь."""
+        path = ask_open_file(self, "Импорт вопросов", OPEN_KINDS)
+        if not path:
+            return
+        try:
+            result = self._importer.import_bank(path)
+        except DocumentError as error:
+            show_message(self, "Импорт не выполнен", str(error))
+            return
+        self.reload()
+        self.bank_changed.emit()
+        show_message(self, "Импорт вопросов", describe_import(result))
+
+    def export_bank(self) -> None:
+        """Сохранить весь банк в файл: это резервная копия вопросов."""
+        today = date.today().strftime("%d.%m.%Y")
+        name = f"Банк вопросов {today}.xlsx"
+        path = ask_save_file(self, "Экспорт банка", name, SAVE_KINDS)
+        if not path:
+            return
+        try:
+            count = self._exporter.export_bank(path)
+        except DocumentError as error:
+            show_message(self, "Экспорт не выполнен", str(error))
+            return
+        saved = plural(count, "вопрос", "вопроса", "вопросов")
+        text = f"В файл записано: {saved}.\n{path}"
+        show_message(self, "Экспорт банка", text)
+
     def _build_header(self) -> QFrame:
         """Заголовок: название, счётчик записей и три кнопки."""
         title = QLabel("Банк вопросов")
@@ -107,12 +176,12 @@ class BankPage(QWidget):
         titles.addWidget(self._counter)
 
         import_button = QPushButton(make_icon("import", TEXT), " Импорт")
-        import_button.clicked.connect(self._show_later_message)
+        import_button.clicked.connect(self.import_bank)
         export_button = QPushButton(
             make_icon("export", TEXT),
             " Экспорт банка",
         )
-        export_button.clicked.connect(self._show_later_message)
+        export_button.clicked.connect(self.export_bank)
         add_button = QPushButton(
             make_icon("plus", ACCENT_TEXT),
             " Добавить вопрос",
@@ -240,11 +309,3 @@ class BankPage(QWidget):
             return
         self.reload(keep_position=True)
         self.bank_changed.emit()
-
-    def _show_later_message(self) -> None:
-        """Импорт и экспорт банка появятся на следующем шаге."""
-        show_message(
-            self,
-            "Импорт и экспорт",
-            "Импорт и экспорт банка появятся на следующем шаге разработки.",
-        )

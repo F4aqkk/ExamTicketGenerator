@@ -14,12 +14,18 @@ from PyQt6.QtWidgets import (
 )
 from sqlalchemy.orm import Session
 
+from app.models.generation import Generation
+from app.services.export_service import ExportService
 from app.services.generation_service import GenerationService
+from app.services.import_service import ImportService
 from app.services.question_service import QuestionService
+from app.services.settings_service import SettingsService
 from app.ui.bank_page import BankPage
+from app.ui.generator_page import GeneratorPage
+from app.ui.history_page import HistoryPage
 from app.ui.icons import make_icon
+from app.ui.settings_page import SettingsPage
 from app.ui.theme import ACCENT, MUTED, ONLINE
-from app.ui.widgets import PlaceholderPage
 
 # Разделы программы: название и иконка. Порядок как в боковом меню.
 SECTIONS = [
@@ -97,6 +103,10 @@ class Sidebar(QFrame):
         """Обновить счётчик у раздела с этим номером."""
         self._buttons[section].set_count(count)
 
+    def choose(self, section: int) -> None:
+        """Отметить в меню раздел с этим номером."""
+        self._buttons[section].setChecked(True)
+
     @staticmethod
     def _build_logo() -> QHBoxLayout:
         """Логотип: жёлтый квадрат со знаком № и название программы."""
@@ -140,22 +150,45 @@ class MainWindow(QMainWindow):
     с базой не работают: они только вызывают сервисы.
     """
 
-    def __init__(self, session: Session):
-        """Собрать окно: меню, страницы и связи между ними."""
+    def __init__(
+        self,
+        session: Session,
+        settings: SettingsService | None = None,
+    ):
+        """Собрать окно: меню, страницы и связи между ними.
+
+        Сервис настроек можно передать свой (так делают тесты);
+        иначе настройки читаются из файла рядом с базой.
+        """
         super().__init__()
         self.setWindowTitle("ExamTicket — генератор экзаменационных билетов")
         self.resize(1280, 800)
         self.setMinimumSize(1024, 640)
         self._questions = QuestionService(session)
         self._generations = GenerationService(session)
+        self._settings = settings or SettingsService()
+        self._exporter = ExportService(session, self._settings)
+        self._importer = ImportService(session)
 
         self._sidebar = Sidebar()
-        self._bank_page = BankPage(self._questions)
+        self._bank_page = BankPage(
+            self._questions,
+            self._exporter,
+            self._importer,
+        )
+        self._generator_page = GeneratorPage(
+            self._generations,
+            self._questions,
+            self._settings,
+            self._exporter,
+        )
+        self._history_page = HistoryPage(self._generations)
+        self._settings_page = SettingsPage(self._settings)
         self._pages = QStackedWidget()  # показывает одну страницу из стопки
         self._pages.addWidget(self._bank_page)
-        self._pages.addWidget(PlaceholderPage("Генератор билетов"))
-        self._pages.addWidget(PlaceholderPage("История"))
-        self._pages.addWidget(PlaceholderPage("Настройки"))
+        self._pages.addWidget(self._generator_page)
+        self._pages.addWidget(self._history_page)
+        self._pages.addWidget(self._settings_page)
 
         central = QWidget()
         layout = QHBoxLayout(central)
@@ -165,8 +198,54 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._pages, 1)
         self.setCentralWidget(central)
 
-        self._sidebar.section_chosen.connect(self._pages.setCurrentIndex)
+        self._sidebar.section_chosen.connect(self._show_section)
         self._bank_page.bank_changed.connect(self._update_counts)
+        self._generator_page.generated.connect(self._on_generated)
+        self._history_page.open_requested.connect(self._open_generation)
+        self._history_page.export_requested.connect(self._export_generation)
+        self._history_page.deleted.connect(self._on_deleted)
+        self._settings_page.backup_requested.connect(
+            self._bank_page.export_bank,
+        )
+        self._settings_page.restore_requested.connect(
+            self._bank_page.import_bank,
+        )
+        self._settings_page.settings_changed.connect(
+            self._generator_page.apply_settings,
+        )
+        self._update_counts()
+
+    def _show_section(self, section: int) -> None:
+        """Открыть раздел с этим номером."""
+        if section == GENERATOR:
+            # Пока работали в банке, темы и их вопросы могли измениться.
+            self._generator_page.reload_topics()
+        self._pages.setCurrentIndex(section)
+
+    def _on_generated(self) -> None:
+        """Составлены новые билеты: обновить историю и счётчики."""
+        self._history_page.reload()
+        self._update_counts()
+
+    def _open_generation(self, generation: Generation) -> None:
+        """В истории нажали «Открыть»: показать билеты в генераторе."""
+        self._generator_page.show_generation(generation)
+        self._sidebar.choose(GENERATOR)
+        self._show_section(GENERATOR)
+
+    def _export_generation(self, generation: Generation) -> None:
+        """В истории нажали экспорт: сохранить билеты в файл.
+
+        Формат берётся из настроек, билеты сохраняются без ответов.
+        """
+        self._generator_page.export_generation(
+            generation,
+            self._settings.settings.export_format,
+        )
+
+    def _on_deleted(self, generation_id: int) -> None:
+        """В истории удалили генерацию: убрать её из предпросмотра."""
+        self._generator_page.close_generation(generation_id)
         self._update_counts()
 
     def _update_counts(self) -> None:
