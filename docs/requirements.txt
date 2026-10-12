@@ -1,0 +1,4 @@
+# Библиотеки только для разработчика: документация и покрытие тестами.
+# Установка: venv\Scripts\python.exe -m pip install -r docs\requirements.txt
+sphinx==9.1.0
+coverage==7.16.2
