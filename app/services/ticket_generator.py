@@ -33,7 +33,11 @@ class TicketGenerator:
         Если вопросы не повторяются, следующий билет берёт их из той же
         очереди, и вопрос встретится второй раз только когда кончатся
         неиспользованные. Иначе каждый билет набирается из всех вопросов
-        заново. Разные темы берутся, пока это позволяет банк.
+        заново.
+
+        Разные темы берутся кругами: сначала по одному вопросу из каждой
+        темы, потом круг начинается заново. Так темы чередуются по всему
+        билету, а не только в его начале.
         """
         tickets = [[] for _ in range(tickets_count)]  # пустые билеты
         for difficulty, amount in counts.items():
@@ -66,7 +70,11 @@ class TicketGenerator:
             if not queue:  # очередь кончилась: перемешать вопросы заново
                 queue.extend(questions)
                 random.shuffle(queue)
-            question = queue.pop(cls._position(queue, used_topics))
+            position = cls._position(queue, used_topics)
+            if position is None:  # все темы уже были: начать круг заново
+                used_topics.clear()
+                position = cls._position(queue, used_topics)
+            question = queue.pop(position)
             if question not in chosen:  # в одном билете без повторов
                 chosen.append(question)
                 if used_topics is not None:
@@ -74,12 +82,14 @@ class TicketGenerator:
         return chosen
 
     @staticmethod
-    def _position(queue, used_topics) -> int:
+    def _position(queue, used_topics) -> int | None:
         """Место в очереди, откуда взять следующий вопрос.
 
-        Обычно это конец очереди. Если нужны разные темы, ищем
-        с конца вопрос из темы, которой в билете ещё нет; если такого
-        нет, берём последний.
+        Обычно это конец очереди. Если нужны разные темы, ищем с конца
+        вопрос из темы, которой в билете ещё нет. Когда в очереди таких
+        вопросов не осталось, ответ — «нет места» (None): круг тем
+        начинается заново, и темы продолжают чередоваться дальше,
+        а не идут случайно.
         """
         last = len(queue) - 1
         if used_topics is None:
@@ -87,4 +97,4 @@ class TicketGenerator:
         for position in range(last, -1, -1):
             if queue[position].topic_id not in used_topics:
                 return position
-        return last
+        return None
