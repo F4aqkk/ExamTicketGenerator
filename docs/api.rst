@@ -8,6 +8,8 @@
 Точка входа и инфраструктура
 ----------------------------
 
+.. automodule:: run
+
 .. automodule:: app.main
 
 .. automodule:: app.database
