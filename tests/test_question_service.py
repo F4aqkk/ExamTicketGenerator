@@ -156,3 +156,41 @@ def test_search_finds_question_by_tag_name(session):
     found = QuestionRepository(session).search(text="join")
 
     assert [question.text for question in found] == ["Первый"]
+
+
+def test_tag_without_questions_is_deleted_on_update(session):
+    """Тег, у которого забрали последний вопрос, в базе не остаётся."""
+    topic = TopicRepository(session).create(name="SQL")
+    service = QuestionService(session)
+    question = service.add_question(make_data(topic))
+    assert [tag.name for tag in service.get_tags()] == [
+        "JOIN",
+        "подзапросы",
+    ]
+
+    service.update_question(question, make_data(topic, tag_names="JOIN"))
+
+    assert [tag.name for tag in service.get_tags()] == ["JOIN"]
+
+
+def test_tags_are_deleted_with_the_last_question(session):
+    """После удаления последнего вопроса его теги тоже убираются."""
+    topic = TopicRepository(session).create(name="SQL")
+    service = QuestionService(session)
+    question = service.add_question(make_data(topic))
+
+    service.delete_question(question)
+
+    assert service.get_tags() == []
+
+
+def test_tag_stays_while_another_question_uses_it(session):
+    """Тег остаётся, пока он есть хотя бы у одного вопроса."""
+    topic = TopicRepository(session).create(name="SQL")
+    service = QuestionService(session)
+    first = service.add_question(make_data(topic, text="Первый"))
+    service.add_question(make_data(topic, text="Второй", tag_names="JOIN"))
+
+    service.delete_question(first)
+
+    assert [tag.name for tag in service.get_tags()] == ["JOIN"]

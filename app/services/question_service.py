@@ -132,6 +132,23 @@ class QuestionService:
                 "Этот вопрос стоит в сохранённых билетах, "
                 "поэтому удалить его нельзя."
             ) from None
+        self.delete_empty_tags()
+
+    def delete_empty_tags(self) -> int:
+        """Удалить теги, у которых не осталось ни одного вопроса.
+
+        Вызывается после добавления, изменения и удаления вопроса.
+        Без этого тег, у которого забрали последний вопрос, остаётся
+        в базе и мешает в списке фильтра «Все теги». Возвращает,
+        сколько тегов удалено.
+        """
+        empty = [tag for tag in self.tags.get_all() if not tag.questions]
+        if not empty:
+            return 0
+        for tag in empty:
+            self.session.delete(tag)
+        self.session.commit()
+        return len(empty)
 
     def _check(self, data: QuestionData) -> None:
         """Проверить данные формы; при ошибке сообщить, что исправить."""
@@ -163,6 +180,7 @@ class QuestionService:
         except Exception:
             self.session.rollback()  # ошибка: отменить все изменения
             raise  # и сообщить об ошибке дальше
+        self.delete_empty_tags()  # тег мог остаться без вопросов
         return question
 
     def _find_or_make_tags(self, line: str) -> list[Tag]:

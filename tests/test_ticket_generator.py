@@ -113,3 +113,35 @@ def test_tickets_without_no_repeat_rule_are_still_correct(session):
     assert len(tickets) == 5
     for ticket in tickets:
         assert len(set(ticket)) == 3
+
+
+def test_mix_topics_keeps_topics_in_turns(session):
+    """С правилом «Разные темы» темы чередуются по всему билету."""
+    topics = TopicRepository(session)
+    made = [topics.create(name=name) for name in ("SQL", "Python", "Git")]
+    for topic in made:
+        add_questions(session, topic.id, 1, 10)
+    generator = TicketGenerator(QuestionRepository(session))
+
+    ticket = generator.generate(1, {1: 9}, mix_topics=True)[0]
+
+    counts = {topic.id: 0 for topic in made}
+    for question in ticket:
+        counts[question.topic_id] += 1
+    assert sorted(counts.values()) == [3, 3, 3]
+
+
+def test_mix_topics_starts_new_round_of_topics(session):
+    """Круг тем начинается заново: первые три темы идут и дальше."""
+    topics = TopicRepository(session)
+    made = [topics.create(name=name) for name in ("SQL", "Python", "Git")]
+    for topic in made:
+        add_questions(session, topic.id, 1, 10)
+    generator = TicketGenerator(QuestionRepository(session))
+
+    ticket = generator.generate(1, {1: 6}, mix_topics=True)[0]
+
+    first_round = {question.topic_id for question in ticket[:3]}
+    second_round = {question.topic_id for question in ticket[3:]}
+    assert len(first_round) == 3  # в первом круге все три темы
+    assert first_round == second_round  # и во втором тоже все три

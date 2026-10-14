@@ -1,0 +1,51 @@
+# Автоматические проверки кода на GitHub (GitHub Actions).
+# Запускаются при отправке кода в main и при каждом Pull Request:
+# тот же порядок, что и у разработчика на компьютере —
+# flake8, black, pytest.
+
+name: Проверки кода
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    name: flake8, black, pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Забрать код из репозитория
+        uses: actions/checkout@v4
+
+      - name: Поставить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Поставить системные библиотеки для окон PyQt6
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libgl1 libdbus-1-3 libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xinerama0
+
+      - name: Поставить библиотеки проекта
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Проверка flake8
+        run: flake8 .
+
+      - name: Проверка black
+        run: black --check .
+
+      - name: Тесты pytest
+        env:
+          QT_QPA_PLATFORM: offscreen  # окна создаются без экрана
+        run: pytest -q

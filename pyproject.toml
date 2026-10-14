@@ -1,6 +1,10 @@
 # Настройки инструментов проверки кода.
 # flake8 читает свой файл .flake8, покрытие — .coveragerc.
 
+[tool.pytest.ini_options]
+# Тесты лежат только в папке tests: в готовую сборку заглядывать не надо.
+testpaths = ["tests"]
+
 [tool.black]
 line-length = 88
 # Готовая сборка release/ExamTicket содержит чужой код библиотек:
