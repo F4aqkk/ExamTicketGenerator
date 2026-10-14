@@ -1,0 +1,10 @@
+# Настройки инструментов проверки кода.
+# flake8 читает свой файл .flake8, покрытие — .coveragerc.
+
+[tool.black]
+line-length = 88
+# Готовая сборка release/ExamTicket содержит чужой код библиотек:
+# форматировать его не нужно.
+extend-exclude = '''
+^/release/
+'''
