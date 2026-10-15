@@ -19,9 +19,9 @@
 ### Способ 1. Готовая программа (Python не нужен)
 
 1. Скачайте архив
-   [ExamTicket-1.0.0-windows.zip](https://github.com/F4aqkk/ExamTicketGenerator/releases/download/v1.0.0/ExamTicket-1.0.0-windows.zip)
+   [ExamTicket-1.1.0-windows.zip](https://github.com/F4aqkk/ExamTicketGenerator/releases/download/v1.1.0/ExamTicket-1.1.0-windows.zip)
    (около 62 МБ) со страницы
-   [Releases](https://github.com/F4aqkk/ExamTicketGenerator/releases/tag/v1.0.0).
+   [Releases](https://github.com/F4aqkk/ExamTicketGenerator/releases/tag/v1.1.0).
 2. Распакуйте архив целиком, лучше всего в «Документы». Файл
    `ExamTicket.exe` работает только вместе с папкой `_internal`,
    которая лежит рядом, — запускать прямо из архива нельзя.
