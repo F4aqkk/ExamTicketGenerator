@@ -284,6 +284,13 @@ GitHub ставит Python 3.12, библиотеки из ``requirements.txt``
 (зелёная галочка или красный крестик) и на вкладке Actions
 репозитория. Pull Request с красным крестиком не сливается.
 
+Файл ``.github/workflows/docs.yml`` собирает эту документацию Sphinx.
+На Pull Request он только проверяет, что сборка проходит, а после
+отправки кода в ``main`` выкладывает страницы на сайт GitHub Pages:
+https://f4aqkk.github.io/ExamTicketGenerator/. В настройках
+репозитория (Settings → Pages) источником сайта должно быть выбрано
+«GitHub Actions».
+
 Контрольный пример
 ~~~~~~~~~~~~~~~~~~
 
